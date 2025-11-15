@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>加载中 - mspaint</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-bg: #0a0a0f;
+            --secondary-bg: #1a1a2e;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --accent-color: #6366f1;
+            --border-color: #2a2a3e;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
+            color: var(--text-primary);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .loading-content {
+            text-align: center;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .loading-logo {
+            margin-bottom: 2rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .loading-logo svg {
+            filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.5));
+        }
+
+        .loading-title {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .loading-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+        }
+
+        .loading-bar-container {
+            margin: 2rem auto;
+            max-width: 400px;
+        }
+
+        .loading-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .loading-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(99, 102, 241, 0.3) 50%, 
+                transparent 100%);
+            animation: shimmer 2s infinite;
+        }
+
+        .loading-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.6);
+            width: 0%;
+        }
+
+        .loading-percentage {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .loading-text {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-content">
+        <div class="loading-logo">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="url(#gradient1)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M2 17L12 22L22 17" stroke="url(#gradient1)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M2 12L12 17L22 12" stroke="url(#gradient1)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <defs>
+                    <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+            </svg>
+        </div>
+        <h2 class="loading-title">mspaint</h2>
+        <p class="loading-subtitle">最强DOOORS汉化脚本</p>
+        
+        <div class="loading-bar-container">
+            <div class="loading-bar">
+                <div class="loading-bar-fill" id="loadingBarFill"></div>
+            </div>
+            <div class="loading-percentage" id="loadingPercentage">0%</div>
+        </div>
+        
+        <p class="loading-text" id="loadingText">正在加载资源...</p>
+    </div>
+
+    <script>
+        let loadingProgress = 0;
+        const loadingDuration = 4000;
+        const loadingInterval = 50;
+        const totalSteps = loadingDuration / loadingInterval;
+
+        const loadingTexts = [
+            '正在加载资源...',
+            '初始化脚本引擎...',
+            '连接服务器...',
+            '加载UI组件...',
+            '准备就绪...'
+        ];
+
+        function updateLoadingProgress() {
+            loadingProgress++;
+            const percentage = Math.min(Math.floor((loadingProgress / totalSteps) * 100), 100);
+            
+            const loadingBarFill = document.getElementById('loadingBarFill');
+            const loadingPercentage = document.getElementById('loadingPercentage');
+            const loadingText = document.getElementById('loadingText');
+            
+            if (loadingBarFill && loadingPercentage) {
+                loadingBarFill.style.width = percentage + '%';
+                loadingPercentage.textContent = percentage + '%';
+            }
+            
+            if (loadingText) {
+                const textIndex = Math.floor((percentage / 100) * (loadingTexts.length - 1));
+                loadingText.textContent = loadingTexts[textIndex];
+            }
+            
+            if (percentage >= 100) {
+                clearInterval(loadingTimer);
+                setTimeout(() => {
+                    // 标记已加载
+                    sessionStorage.setItem('hasLoaded', 'true');
+                    // 跳转到主页
+                    window.location.href = 'index.html';
+                }, 500);
+            }
+        }
+
+        const loadingTimer = setInterval(updateLoadingProgress, loadingInterval);
+    </script>
+</body>
+</html>

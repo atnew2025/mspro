@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文档查看器 - mspaint</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .doc-viewer-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 8rem 2rem 4rem;
+        }
+
+        .doc-header {
+            margin-bottom: 3rem;
+        }
+
+        .doc-header h1 {
+            font-size: 2.5rem;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .doc-nav {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .doc-nav-btn {
+            padding: 0.75rem 1.5rem;
+            background: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .doc-nav-btn:hover {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+        }
+
+        .doc-nav-btn.active {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        .doc-content {
+            background: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 3rem;
+            line-height: 1.8;
+        }
+
+        .doc-content h1,
+        .doc-content h2,
+        .doc-content h3 {
+            color: var(--text-primary);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .doc-content h1 {
+            font-size: 2rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .doc-content h2 {
+            font-size: 1.5rem;
+        }
+
+        .doc-content h3 {
+            font-size: 1.25rem;
+        }
+
+        .doc-content p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .doc-content ul,
+        .doc-content ol {
+            color: var(--text-secondary);
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .doc-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        .doc-content code {
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--accent-color);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .doc-content pre {
+            background: var(--primary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+        }
+
+        .doc-content pre code {
+            background: none;
+            padding: 0;
+            color: var(--text-primary);
+        }
+
+        .doc-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+
+        .doc-content th,
+        .doc-content td {
+            border: 1px solid var(--border-color);
+            padding: 0.75rem;
+            text-align: left;
+        }
+
+        .doc-content th {
+            background: var(--primary-bg);
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .doc-content blockquote {
+            border-left: 4px solid var(--accent-color);
+            padding-left: 1.5rem;
+            margin: 1.5rem 0;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .doc-content a {
+            color: var(--accent-color);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .doc-content a:hover {
+            color: #8b5cf6;
+            text-decoration: underline;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+    </style>
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <div class="background-dots"></div>
+    
+    <!-- 雷电支持出品标识 -->
+    <a href="https://space.bilibili.com/652308016" target="_blank" class="sponsor-badge">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/>
+        </svg>
+        <span>雷电支持出品</span>
+    </a>
+    
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 17L12 22L22 17" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 12L12 17L22 12" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>mspaint</span>
+            </a>
+            <div class="nav-links">
+                <a href="index.html">首页</a>
+                <a href="index.html#features">功能</a>
+                <a href="index.html#docs">文档</a>
+                <a href="raw.html">Raw</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="doc-viewer-container">
+        <div class="doc-header">
+            <h1 id="docTitle">加载中...</h1>
+            <div class="doc-nav">
+                <a href="?doc=README.md" class="doc-nav-btn">📖 README</a>
+                <a href="?doc=CHAT_FEATURES.md" class="doc-nav-btn">💬 聊天功能</a>
+                <a href="?doc=RAW_USAGE.md" class="doc-nav-btn">🔗 Raw 使用</a>
+            </div>
+        </div>
+
+        <div class="doc-content" id="docContent">
+            <div class="loading">正在加载文档...</div>
+        </div>
+    </div>
+
+    <script>
+        // 获取 URL 参数
+        const urlParams = new URLSearchParams(window.location.search);
+        const docFile = urlParams.get('doc') || 'README.md';
+
+        // 文档内容映射（内嵌方式，避免 fetch 限制）
+        const docsContent = {
+            'README.md': `# mspaint - The best BABFT script
+
+一个功能强大的 Roblox Build A Boat For Treasure (BABFT) 游戏脚本展示网站和完整的 Lua 脚本。
+
+## 📋 项目结构
+
+\`\`\`
+麦克/
+├── index.html          # 主页面
+├── styles.css          # 样式文件
+├── script.js           # JavaScript 交互
+├── mspaint-script.lua  # Roblox Lua 脚本
+├── raw/                # Raw 文件目录
+│   └── mspaint-script.lua
+├── docs-viewer.html    # 文档查看器
+└── README.md           # 说明文档
+\`\`\`
+
+## 🌟 网站功能
+
+### 前端特性
+- ✨ 现代化深色主题设计
+- 🎨 流畅的动画效果
+- 📱 完全响应式布局
+- 🖱️ 交互式 UI 组件
+- 📋 一键复制脚本功能
+- 🔔 优雅的通知系统
+- ⚡ 粒子背景效果
+- 🤖 AI 聊天助手（DeepSeek）
+- 📁 Raw 文件访问
+
+## 🎮 Roblox Lua 脚本功能
+
+### 核心功能
+- 🏗️ **自动建造系统** - 智能化建造辅助
+- ⚡ **快速建造模式** - 提高建造效率
+- 📐 **网格对齐功能** - 精准放置方块
+- 🎯 **位置控制** - 精确的坐标控制
+- 💾 **保存/加载** - 保存和加载建造方案
+- 🎨 **GUI 界面** - 美观的图形用户界面
+
+## 🚀 使用方法
+
+### 网站部署
+
+1. **本地预览**
+   \`\`\`bash
+   # 直接在浏览器中打开 index.html
+   # 或使用本地服务器
+   python -m http.server 8000
+   \`\`\`
+
+2. **在线部署**
+   - GitHub Pages
+   - Netlify
+   - Vercel
+
+### Roblox 脚本使用
+
+1. 安装 Roblox 脚本执行器
+2. 进入 Build A Boat For Treasure 游戏
+3. 执行脚本：
+   \`\`\`lua
+   loadstring(game:HttpGet("https://your-domain.com/raw/mspaint-script.lua"))()
+   \`\`\`
+
+## 📝 更新日志
+
+### Version 2.0.0 (2024-11-15)
+- ✨ 全新的 GUI 界面设计
+- 🎨 添加现代化网站展示
+- ⚡ 优化脚本性能
+- 🤖 集成 AI 聊天助手
+- 📁 添加 Raw 文件功能
+- 🔧 添加更多自定义选项
+
+## ⚠️ 注意事项
+
+1. **安全警告** - 仅在私人服务器使用
+2. **兼容性** - 需要定期更新
+3. **性能** - 根据设备调整参数
+
+## 📄 许可证
+
+本项目仅供学习和研究使用。`,
+
+            'CHAT_FEATURES.md': `# AI 聊天功能说明
+
+## 🎯 新增功能
+
+### 1. 乱码字符自动清除
+- ✅ 自动检测并移除 \`�\` 字符
+- ✅ 清除所有不可见的替换字符
+- ✅ 移除零宽字符和控制字符
+- ✅ 清理 BOM 和其他编码问题
+
+### 2. 聊天窗口拖动
+- 🖱️ **拖动方式**：点击标题栏并拖动
+- 📍 **边界限制**：窗口不会移出屏幕
+- 🎯 **智能识别**：不会拖动关闭按钮
+
+### 3. 聊天窗口缩放
+- 📏 **缩放手柄**：右下角的 \`⋰\` 图标
+- 🔄 **自由缩放**：拖动手柄调整大小
+- 📐 **尺寸限制**：
+  - 最小宽度：350px
+  - 最小高度：400px
+
+## 🎨 使用方法
+
+### 拖动窗口
+1. 点击聊天窗口顶部的标题栏
+2. 按住鼠标左键拖动
+3. 松开鼠标完成移动
+
+### 缩放窗口
+1. 将鼠标移到窗口右下角
+2. 看到 \`⋰\` 图标时点击并拖动
+3. 调整到合适的大小后松开
+
+### 配置 API Key
+1. 访问 [platform.deepseek.com](https://platform.deepseek.com)
+2. 注册并创建 API Key
+3. 在聊天窗口底部输入 API Key
+4. 自动保存到本地
+
+## 💡 提示
+
+- **性能优化**：拖动和缩放时会暂时禁用过渡动画
+- **响应式**：在移动设备上自动适配屏幕大小
+- **兼容性**：支持所有现代浏览器`,
+
+            'RAW_USAGE.md': `# Raw 文件功能说明
+
+## 📋 概述
+
+类似于 GitHub 的 raw 功能，您现在可以直接通过 URL 访问和加载 Lua 脚本文件。
+
+## 🚀 使用方法
+
+### 1. 在 Roblox 中直接加载
+
+\`\`\`lua
+loadstring(game:HttpGet("https://your-domain.com/raw/mspaint-script.lua"))()
+\`\`\`
+
+### 2. 通过网页访问
+
+访问 \`raw.html\` 页面：
+- 查看所有可用的 raw 文件
+- 复制文件链接
+- 下载文件到本地
+- 在线查看文件内容
+
+### 3. 直接访问文件
+
+\`\`\`
+https://your-domain.com/raw/mspaint-script.lua
+\`\`\`
+
+## 🔧 部署说明
+
+### GitHub Pages
+\`\`\`bash
+# 1. 创建 GitHub 仓库
+# 2. 上传所有文件
+# 3. 启用 GitHub Pages
+# 4. 访问 https://username.github.io/repo-name/
+\`\`\`
+
+### Netlify
+\`\`\`bash
+# 1. 拖放文件夹到 Netlify
+# 2. 自动部署
+# 3. 访问 https://your-site.netlify.app/
+\`\`\`
+
+## 🎯 功能特点
+
+- ✅ **直接访问**：无需下载，直接在 Roblox 中加载
+- ✅ **版本控制**：可以轻松更新脚本内容
+- ✅ **易于分享**：一个链接即可分享脚本
+- ✅ **在线查看**：支持在浏览器中查看代码
+- ✅ **快速复制**：一键复制加载命令
+
+## 💡 最佳实践
+
+1. **版本号**：在脚本中包含版本号
+2. **更新日志**：维护更新日志
+3. **备份**：定期备份脚本文件
+4. **测试**：更新前先在本地测试
+5. **通知**：重大更新时通知用户`
+        };
+
+        // 加载文档
+        function loadDocument(filename) {
+            try {
+                const markdown = docsContent[filename];
+                
+                if (!markdown) {
+                    throw new Error('文档不存在');
+                }
+                
+                // 使用 marked.js 解析 Markdown
+                const html = marked.parse(markdown);
+                
+                // 显示内容
+                document.getElementById('docContent').innerHTML = html;
+                
+                // 更新标题
+                const title = filename.replace('.md', '');
+                document.getElementById('docTitle').textContent = title;
+                
+                // 高亮当前文档按钮
+                document.querySelectorAll('.doc-nav-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.href.includes(filename)) {
+                        btn.classList.add('active');
+                    }
+                });
+                
+            } catch (error) {
+                console.error('加载文档失败:', error);
+                document.getElementById('docContent').innerHTML = `
+                    <div class="loading">
+                        <p>❌ 无法加载文档</p>
+                        <p style="margin-top: 1rem; color: var(--text-secondary);">
+                            文档：${filename}
+                        </p>
+                        <p style="margin-top: 1rem;">
+                            <a href="index.html" style="color: var(--accent-color);">返回首页</a>
+                        </p>
+                    </div>
+                `;
+            }
+        }
+
+        // 页面加载时加载文档
+        window.addEventListener('load', () => {
+            loadDocument(docFile);
+        });
+    </script>
+</body>
+</html>

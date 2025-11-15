@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raw Files - mspaint</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #0a0a0f;
+            color: #ffffff;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #6366f1;
+        }
+
+        .file-list {
+            background: #1a1a2e;
+            border: 1px solid #2a2a3e;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 6px;
+            margin-bottom: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .file-item:hover {
+            background: rgba(99, 102, 241, 0.2);
+            transform: translateX(5px);
+        }
+
+        .file-name {
+            font-size: 1.1rem;
+            color: #ffffff;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-view {
+            background: #6366f1;
+            color: white;
+        }
+
+        .btn-view:hover {
+            background: #5558e3;
+            transform: translateY(-2px);
+        }
+
+        .btn-copy {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-copy:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
+        .btn-download {
+            background: #8b5cf6;
+            color: white;
+        }
+
+        .btn-download:hover {
+            background: #7c3aed;
+            transform: translateY(-2px);
+        }
+
+        .info-box {
+            background: #1a1a2e;
+            border: 1px solid #2a2a3e;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-box h2 {
+            color: #6366f1;
+            margin-bottom: 1rem;
+        }
+
+        .info-box code {
+            background: rgba(99, 102, 241, 0.15);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            color: #a0a0b0;
+        }
+
+        .info-box pre {
+            background: #0a0a0f;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-top: 0.5rem;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+            display: none;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 2rem;
+            color: #6366f1;
+            text-decoration: none;
+            font-size: 1rem;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* 雷电支持出品标识 */
+        .sponsor-badge {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            border-radius: 20px;
+            color: white;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+            z-index: 1001;
+            transition: all 0.3s ease;
+            animation: pulseGlow 2s ease-in-out infinite;
+        }
+
+        .sponsor-badge:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 25px rgba(255, 107, 107, 0.5);
+            background: linear-gradient(135deg, #ff5252 0%, #f44336 100%);
+        }
+
+        .sponsor-badge svg {
+            animation: lightning 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% {
+                box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+            }
+            50% {
+                box-shadow: 0 4px 25px rgba(255, 107, 107, 0.6);
+            }
+        }
+
+        @keyframes lightning {
+            0%, 100% {
+                transform: rotate(0deg);
+            }
+            25% {
+                transform: rotate(-10deg);
+            }
+            75% {
+                transform: rotate(10deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 雷电支持出品标识 -->
+    <a href="https://space.bilibili.com/652308016" target="_blank" class="sponsor-badge">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/>
+        </svg>
+        <span>雷电支持出品</span>
+    </a>
+
+    <div class="container">
+        <a href="index.html" class="back-link">← 返回主页</a>
+        
+        <style>
+            .back-link {
+                cursor: pointer;
+            }
+        </style>
+        
+        <h1>📁 Raw Files</h1>
+        
+        <div class="info-box">
+            <h2>使用说明</h2>
+            <p>这些文件可以直接在 Roblox 中使用 <code>HttpGet</code> 加载：</p>
+            <pre><code>loadstring(game:HttpGet("https://your-domain.com/raw/mspaint-script.lua"))()</code></pre>
+            <p style="margin-top: 1rem;">或者点击下方按钮复制、下载或查看文件内容。</p>
+        </div>
+
+        <div class="file-list">
+            <div class="file-item">
+                <div class="file-name">📄 mspaint-script.lua</div>
+                <div class="file-actions">
+                    <a href="raw/mspaint-script.lua" class="btn btn-view" target="_blank">查看</a>
+                    <button class="btn btn-copy" onclick="copyUrl('raw/mspaint-script.lua')">复制链接</button>
+                    <a href="raw/mspaint-script.lua" class="btn btn-download" download>下载</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <h2>API 端点</h2>
+            <p>直接访问文件：</p>
+            <pre><code>GET /raw/mspaint-script.lua</code></pre>
+            
+            <p style="margin-top: 1rem;">完整 URL（部署后替换域名）：</p>
+            <pre><code id="fullUrl">https://your-domain.com/raw/mspaint-script.lua</code></pre>
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // 复制 URL
+        function copyUrl(path) {
+            const fullUrl = window.location.origin + '/' + path;
+            
+            navigator.clipboard.writeText(fullUrl).then(() => {
+                showNotification('链接已复制到剪贴板！');
+            }).catch(err => {
+                console.error('复制失败:', err);
+                showNotification('复制失败，请手动复制', 'error');
+            });
+        }
+
+        // 显示通知
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.display = 'block';
+            notification.style.background = type === 'success' ? '#10b981' : '#ef4444';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // 更新完整 URL
+        window.addEventListener('load', () => {
+            const fullUrlElement = document.getElementById('fullUrl');
+            if (window.location.hostname !== '') {
+                fullUrlElement.textContent = window.location.origin + '/raw/mspaint-script.lua';
+            }
+        });
+    </script>
+</body>
+</html>

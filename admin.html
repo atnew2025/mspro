@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理后台 - mspaint</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* 管理后台专用样式 */
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+            background: var(--primary-bg);
+        }
+
+        /* 侧边栏 */
+        .admin-sidebar {
+            width: 260px;
+            background: var(--secondary-bg);
+            border-right: 1px solid rgba(99, 102, 241, 0.1);
+            padding: 2rem 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .admin-logo {
+            padding: 0 2rem 2rem;
+            border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .admin-logo h1 {
+            color: var(--accent-color);
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .admin-logo p {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .admin-nav {
+            padding: 0 1rem;
+        }
+
+        .admin-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 10px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .admin-nav-item:hover {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--accent-color);
+        }
+
+        .admin-nav-item.active {
+            background: rgba(99, 102, 241, 0.2);
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        .admin-nav-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* 主内容区 */
+        .admin-main {
+            margin-left: 260px;
+            flex: 1;
+            padding: 2rem;
+        }
+
+        .admin-header {
+            background: var(--secondary-bg);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-header h2 {
+            color: var(--text-primary);
+            font-size: 2rem;
+        }
+
+        .admin-user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .admin-user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--accent-color);
+        }
+
+        /* 统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--secondary-bg);
+            border-radius: 15px;
+            padding: 1.5rem;
+            border: 1px solid rgba(99, 102, 241, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-color);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.2);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .stat-icon.users {
+            background: rgba(99, 102, 241, 0.2);
+            color: var(--accent-color);
+        }
+
+        .stat-icon.scripts {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .stat-icon.downloads {
+            background: rgba(251, 146, 60, 0.2);
+            color: #fb923c;
+        }
+
+        .stat-icon.views {
+            background: rgba(236, 72, 153, 0.2);
+            color: #ec4899;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .stat-change {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .stat-change.up {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .stat-change.down {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        /* 内容面板 */
+        .admin-panel {
+            background: var(--secondary-bg);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            display: none;
+        }
+
+        .admin-panel.active {
+            display: block;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+        }
+
+        .panel-title {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .panel-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #4f46e5;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--accent-color);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(99, 102, 241, 0.2);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        /* 表格 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table thead {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .data-table th {
+            padding: 1rem;
+            text-align: left;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .data-table td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+            color: var(--text-secondary);
+        }
+
+        .data-table tr:hover {
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .user-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .badge-admin {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .badge-vip {
+            background: rgba(251, 146, 60, 0.2);
+            color: #fb923c;
+        }
+
+        .badge-user {
+            background: rgba(99, 102, 241, 0.2);
+            color: var(--accent-color);
+        }
+
+        /* 搜索框 */
+        .search-box {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            background: rgba(99, 102, 241, 0.05);
+            border: 1px solid rgba(99, 102, 241, 0.1);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        /* 加载状态 */
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(99, 102, 241, 0.1);
+            border-top-color: var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state svg {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .admin-sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .admin-main {
+                margin-left: 0;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 登录页面 */
+        .admin-login {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: var(--primary-bg);
+        }
+
+        .login-box {
+            background: var(--secondary-bg);
+            border-radius: 20px;
+            padding: 3rem;
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid rgba(99, 102, 241, 0.1);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-header h1 {
+            color: var(--accent-color);
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-header p {
+            color: var(--text-secondary);
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .form-group input {
+            padding: 1rem;
+            background: rgba(99, 102, 241, 0.05);
+            border: 1px solid rgba(99, 102, 241, 0.1);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .login-btn:hover {
+            background: #4f46e5;
+            transform: translateY(-2px);
+        }
+
+        .login-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            padding: 1rem;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+        }
+
+        .login-error.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- 登录页面 -->
+    <div class="admin-login" id="loginPage">
+        <div class="login-box">
+            <div class="login-header">
+                <h1>🔐 管理后台</h1>
+                <p>请使用管理员账号登录</p>
+            </div>
+            
+            <div class="login-error" id="loginError"></div>
+            
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label>邮箱</label>
+                    <input type="email" id="adminEmail" placeholder="admin@example.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" id="adminPassword" placeholder="请输入密码" required>
+                </div>
+                
+                <button type="submit" class="login-btn">登录</button>
+            </form>
+            
+            <div style="text-align: center; margin-top: 1.5rem;">
+                <a href="index.html" style="color: var(--accent-color); text-decoration: none;">← 返回首页</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 管理后台主界面 -->
+    <div class="admin-container" id="adminDashboard" style="display: none;">
+        <!-- 侧边栏 -->
+        <aside class="admin-sidebar">
+            <div class="admin-logo">
+                <h1>mspaint Admin</h1>
+                <p>管理控制台</p>
+            </div>
+            
+            <nav class="admin-nav">
+                <a class="admin-nav-item active" data-panel="dashboard">
+                    <svg class="admin-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                    </svg>
+                    仪表板
+                </a>
+                
+                <a class="admin-nav-item" data-panel="users">
+                    <svg class="admin-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                    用户管理
+                </a>
+                
+                <a class="admin-nav-item" data-panel="scripts">
+                    <svg class="admin-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                    </svg>
+                    脚本管理
+                </a>
+                
+                <a class="admin-nav-item" data-panel="announcements">
+                    <svg class="admin-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
+                    </svg>
+                    公告管理
+                </a>
+                
+                <a class="admin-nav-item" data-panel="settings">
+                    <svg class="admin-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    系统设置
+                </a>
+            </nav>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="admin-main">
+            <!-- 顶部栏 -->
+            <header class="admin-header">
+                <h2 id="pageTitle">仪表板</h2>
+                <div class="admin-user-info">
+                    <img id="adminAvatar" class="admin-user-avatar" src="" alt="管理员">
+                    <div>
+                        <div style="color: var(--text-primary); font-weight: 600;" id="adminName">管理员</div>
+                        <div style="color: var(--text-secondary); font-size: 0.85rem;" id="adminEmail2">admin@example.com</div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="adminLogout()">退出</button>
+                </div>
+            </header>
+
+            <!-- 仪表板面板 -->
+            <div class="admin-panel active" id="dashboardPanel">
+                <!-- 统计卡片 -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-value" id="totalUsers">0</div>
+                                <div class="stat-label">总用户数</div>
+                            </div>
+                            <div class="stat-icon users">👥</div>
+                        </div>
+                        <div class="stat-change up">↑ 12% 本月</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-value" id="totalScripts">0</div>
+                                <div class="stat-label">脚本数量</div>
+                            </div>
+                            <div class="stat-icon scripts">📜</div>
+                        </div>
+                        <div class="stat-change up">↑ 5% 本周</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-value" id="totalDownloads">0</div>
+                                <div class="stat-label">总下载量</div>
+                            </div>
+                            <div class="stat-icon downloads">⬇️</div>
+                        </div>
+                        <div class="stat-change up">↑ 28% 本月</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-value" id="totalViews">0</div>
+                                <div class="stat-label">页面访问</div>
+                            </div>
+                            <div class="stat-icon views">👁️</div>
+                        </div>
+                        <div class="stat-change up">↑ 15% 本周</div>
+                    </div>
+                </div>
+
+                <!-- 最近活动 -->
+                <div style="background: var(--secondary-bg); border-radius: 15px; padding: 2rem;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 1.5rem;">最近活动</h3>
+                    <div id="recentActivity">
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                            <p>加载中...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 用户管理面板 -->
+            <div class="admin-panel" id="usersPanel">
+                <div class="panel-header">
+                    <h3 class="panel-title">用户管理</h3>
+                    <div class="panel-actions">
+                        <button class="btn btn-secondary" onclick="refreshUsers()">
+                            🔄 刷新
+                        </button>
+                        <button class="btn btn-primary" onclick="exportUsers()">
+                            📥 导出数据
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="search-box">
+                    <svg class="search-icon" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text" placeholder="搜索用户..." id="userSearch" onkeyup="searchUsers()">
+                </div>
+                
+                <div id="usersTable">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>加载用户数据...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 脚本管理面板 -->
+            <div class="admin-panel" id="scriptsPanel">
+                <div class="panel-header">
+                    <h3 class="panel-title">脚本管理</h3>
+                    <div class="panel-actions">
+                        <button class="btn btn-secondary" onclick="refreshScripts()">
+                            🔄 刷新
+                        </button>
+                        <button class="btn btn-primary" onclick="uploadScript()">
+                            ⬆️ 上传脚本
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="scriptsTable">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>加载脚本数据...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 公告管理面板 -->
+            <div class="admin-panel" id="announcementsPanel">
+                <div class="panel-header">
+                    <h3 class="panel-title">公告管理</h3>
+                    <div class="panel-actions">
+                        <button class="btn btn-primary" onclick="createAnnouncement()">
+                            ➕ 发布公告
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="announcementsTable">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>加载公告数据...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 系统设置面板 -->
+            <div class="admin-panel" id="settingsPanel">
+                <div class="panel-header">
+                    <h3 class="panel-title">系统设置</h3>
+                    <div class="panel-actions">
+                        <button class="btn btn-primary" onclick="saveSettings()">
+                            💾 保存设置
+                        </button>
+                    </div>
+                </div>
+                
+                <div style="display: grid; gap: 2rem;">
+                    <div class="form-group">
+                        <label>网站标题</label>
+                        <input type="text" id="siteTitle" value="mspaint - The best BABFT script">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>网站描述</label>
+                        <input type="text" id="siteDescription" value="最好的 BABFT 脚本">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>维护模式</label>
+                        <label style="display: flex; align-items: center; gap: 1rem;">
+                            <input type="checkbox" id="maintenanceMode">
+                            <span>启用维护模式</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <script src="admin.js"></script>
+</body>
+</html>
